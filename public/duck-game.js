@@ -137,6 +137,7 @@
     ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
 
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     const keys = {};
     let state         = 'idle';
     let score         = 0;
@@ -155,7 +156,16 @@
     let particles     = [];
     let frameCount    = 0;
 
+    let targetTilt    = 0;
+    let currentTilt   = 0;
+
     const duck = { x: 0, y: 0 };
+
+    function handleOrientation(e) {
+      if (e.gamma !== null) {
+        targetTilt = e.gamma;
+      }
+    }
 
     // ── sizing ──────────────────────────────────────────────────────
     function resize() {
@@ -247,6 +257,13 @@
       let move = 0;
       if (keys['ArrowLeft']  || keys['a'] || keys['A']) move = -1;
       if (keys['ArrowRight'] || keys['d'] || keys['D']) move = 1;
+
+      // Apply tilt smoothing and update movement if keyboard isn't active
+      currentTilt += (targetTilt - currentTilt) * 15 * dt;
+      if (move === 0 && Math.abs(currentTilt) > 2) {
+        move = Math.max(-1, Math.min(1, currentTilt / 25));
+      }
+
       duck.x = Math.round(Math.max(0, Math.min(W - DUCK_W, duck.x + move * 5 * dt * 60)));
 
       if (keys[' '] || keys['ArrowUp']) shoot();
@@ -456,10 +473,8 @@
     }
 
     // ── screens ──────────────────────────────────────────────────────
-    // ── screens ──────────────────────────────────────────────────────
     function drawIdle() {
       drawBg();
-      // Moved the duck slightly up to make room for the new text
       drawBobDuck(canvas.height / 2 - 130); 
       const cy = canvas.height / 2 - 20;
       
@@ -477,8 +492,13 @@
       
       ctx.font      = '10px "Space Mono",monospace';
       ctx.fillStyle = T.textMute;
-      ctx.fillText('← / → ARROWS or A / D = MOVE', canvas.width / 2, cy + 78);
-      ctx.fillText('SPACEBAR = SHOOT', canvas.width / 2, cy + 94);
+      if (isMobile) {
+        ctx.fillText('TILT DEVICE TO MOVE', canvas.width / 2, cy + 78);
+        ctx.fillText('TAP SCREEN TO SHOOT', canvas.width / 2, cy + 94);
+      } else {
+        ctx.fillText('← / → ARROWS or A / D = MOVE', canvas.width / 2, cy + 78);
+        ctx.fillText('SPACEBAR = SHOOT', canvas.width / 2, cy + 94);
+      }
 
       // Blinking Start Prompt
       ctx.font      = 'bold 12px "Space Mono",monospace';
@@ -509,6 +529,7 @@
       ctx.fillText('[ SPACE / CLICK TO RETRY ]', cx, cy + 80);
       ctx.globalAlpha = 1;
     }
+
     function drawWin() {
       drawBg();
       drawBobDuck(canvas.height / 2 - 110);
@@ -567,15 +588,29 @@
       shootCooldown = 0;
       frameCount    = 0;
       duck.x        = Math.round(canvas.width / 2 - DUCK_W / 2);
+      window.addEventListener('deviceorientation', handleOrientation);
       initBugs();
       state = 'playing';
     }
 
-    function handleAction() {
-      if      (state === 'idle')     startGame(1);
-      else if (state === 'gameover') startGame(1);
-      else if (state === 'win')      startGame(level + 1);
-      else if (state === 'playing')  shoot();
+    async function handleAction() {
+      if (state === 'idle' || state === 'gameover' || state === 'win') {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            const permission = await DeviceOrientationEvent.requestPermission();
+            if (permission === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation);
+            }
+          } catch (e) {
+            console.warn('Device orientation permission denied:', e);
+          }
+        }
+        if (state === 'idle') startGame(1);
+        else if (state === 'gameover') startGame(1);
+        else if (state === 'win') startGame(level + 1);
+      } else if (state === 'playing') {
+        shoot();
+      }
     }
 
     const onKey = e => {
@@ -625,6 +660,7 @@
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('keyup',   onKey);
+      window.removeEventListener('deviceorientation', handleOrientation);
       ro.disconnect();
     };
   }
