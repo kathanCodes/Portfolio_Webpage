@@ -14,9 +14,8 @@
   const BUG_GAP_X      = 16;
   const BUG_GAP_Y      = 14;
   const BUG_SHOOT_BASE = 1800;
-  const PX             = 4; // base pixel block size
+  const PX             = 4;
 
-  // ── pixel sprite maps (1=filled, 0=empty, 2=accent, 3=dark) ────────
   const DUCK_SPRITE = [
     [0,0,0,1,1,1,0,0,0,0,0,0],
     [0,0,1,1,1,1,1,0,0,0,0,0],
@@ -30,7 +29,6 @@
     [0,0,0,1,1,1,1,0,0,0,0,0],
   ];
 
-  // Three bug frame variants for animation flicker
   const BUG_SPRITES = [
     [
       [0,0,1,0,0,0,1,0,0],
@@ -64,9 +62,7 @@
     ],
   ];
 
-  // Short labels per bug row — never overflow
   const ROW_LABELS = ['NaN', '404', 'NULL'];
-
   const PROJECTILES = ['log()', ';', 'brk', '//!', 'fix'];
 
   const DARK_THEME = {
@@ -116,7 +112,6 @@
     });
   }
 
-  // ── pixel sprite renderer ────────────────────────────────────────
   function drawSprite(sprite, x, y, px, colorMap) {
     sprite.forEach((row, ry) => {
       row.forEach((cell, cx) => {
@@ -167,7 +162,6 @@
       }
     }
 
-    // ── sizing ──────────────────────────────────────────────────────
     function resize() {
       const parent = canvas.parentElement;
       const w = parent ? parent.clientWidth : canvas.width;
@@ -178,7 +172,6 @@
       duck.y = h - DUCK_H - 16;
     }
 
-    // ── bug grid ────────────────────────────────────────────────────
     function initBugs() {
       bugs          = [];
       bugDir        = 1;
@@ -202,7 +195,6 @@
       }
     }
 
-    // ── particles ───────────────────────────────────────────────────
     function spawnParticles(x, y, color, n) {
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;
@@ -224,7 +216,6 @@
       }
     }
 
-    // ── shoot ───────────────────────────────────────────────────────
     function shoot() {
       if (shootCooldown > 0) return;
       bullets.push({
@@ -247,7 +238,6 @@
       return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
     }
 
-    // ── update ──────────────────────────────────────────────────────
     function update(dt) {
       const W = canvas.width;
       const H = canvas.height;
@@ -258,10 +248,11 @@
       if (keys['ArrowLeft']  || keys['a'] || keys['A']) move = -1;
       if (keys['ArrowRight'] || keys['d'] || keys['D']) move = 1;
 
-      // Apply tilt smoothing and update movement if keyboard isn't active
-      currentTilt += (targetTilt - currentTilt) * 15 * dt;
-      if (move === 0 && Math.abs(currentTilt) > 2) {
-        move = Math.max(-1, Math.min(1, currentTilt / 25));
+      if (isMobile) {
+        currentTilt += (targetTilt - currentTilt) * 15 * dt;
+        if (move === 0 && Math.abs(currentTilt) > 2) {
+          move = Math.max(-1, Math.min(1, currentTilt / 25));
+        }
       }
 
       duck.x = Math.round(Math.max(0, Math.min(W - DUCK_W, duck.x + move * 5 * dt * 60)));
@@ -320,16 +311,13 @@
       particles = particles.filter(p => p.life > 0);
     }
 
-    // ── draw background ─────────────────────────────────────────────
     function drawBg() {
       ctx.fillStyle = T.bg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // CRT scanlines
       for (let y = 0; y < canvas.height; y += 4) {
         ctx.fillStyle = T.scanline;
         ctx.fillRect(0, y, canvas.width, 2);
       }
-      // Ground dashed line
       ctx.strokeStyle = T.accent;
       ctx.globalAlpha = 0.25;
       ctx.lineWidth   = 1;
@@ -342,7 +330,6 @@
       ctx.globalAlpha = 1;
     }
 
-    // ── draw HUD ────────────────────────────────────────────────────
     function drawHUD() {
       ctx.font      = 'bold 11px "Space Mono",monospace';
       ctx.textAlign = 'left';
@@ -353,12 +340,10 @@
       ctx.fillStyle = T.accentAlt;
       ctx.textAlign = 'center';
       ctx.fillText(`LVL ${level}`, canvas.width / 2, 20);
-      // pixel heart lives
       ctx.fillStyle = '#ff3c6e';
       ctx.textAlign = 'right';
       for (let i = 0; i < lives; i++) {
         const hx = canvas.width - 10 - i * 16;
-        // tiny 5x4 pixel heart
         [[0,1,0,1,0],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]].forEach((row, ry) => {
           row.forEach((cell, cx) => {
             if (cell) ctx.fillRect(hx + cx * 2, 10 + ry * 2, 2, 2);
@@ -367,26 +352,21 @@
       }
     }
 
-    // ── draw pixel duck ─────────────────────────────────────────────
     function drawDuck(x, y) {
-      const sprite = DUCK_SPRITE;
-      const spritePx = Math.round(DUCK_W / sprite[0].length);
+      const spritePx = Math.round(DUCK_W / DUCK_SPRITE[0].length);
       const colorMap = {
         1: '#FFD600',
-        2: '#111111', // eye
-        3: '#FF8C00', // beak
+        2: '#111111',
+        3: '#FF8C00',
       };
-      drawSprite(sprite, x, y, spritePx, colorMap);
+      drawSprite(DUCK_SPRITE, x, y, spritePx, colorMap);
     }
 
-    // ── draw pixel bug ──────────────────────────────────────────────
     function drawBug(bug) {
       if (!bug.alive) return;
       const rowColor = T.bugRows[bug.row % 3];
       const darkColor = T.bugDark[bug.row % 3];
       const lightColor = T.bugLight[bug.row % 3];
-
-      // pick animated frame (flicker every ~18 frames)
       const frame = BUG_SPRITES[Math.floor(frameCount / 18) % 2 === 0 ? bug.spriteIdx : (bug.spriteIdx + 1) % BUG_SPRITES.length];
       const spriteCols = frame[0].length;
       const spriteRows = frame.length;
@@ -396,11 +376,10 @@
       );
       const offX = Math.round((bug.w - spriteCols * spritePx) / 2);
       const offY = Math.round((bug.h - spriteRows * spritePx) / 2);
-
       const colorMap = { 1: rowColor, 2: lightColor, 3: darkColor };
+      
       drawSprite(frame, bug.x + offX, bug.y + offY, spritePx, colorMap);
 
-      // short label below sprite — tiny, guaranteed to fit
       const label = ROW_LABELS[bug.row % ROW_LABELS.length];
       ctx.font      = `bold ${Math.max(6, spritePx * 2)}px "Space Mono",monospace`;
       ctx.fillStyle = rowColor;
@@ -410,9 +389,7 @@
       ctx.globalAlpha = 1;
     }
 
-    // ── draw player bullet ──────────────────────────────────────────
     function drawBullet(b) {
-      // pixelated beam: stack of PX squares
       ctx.fillStyle = T.accent;
       for (let i = 0; i < 5; i++) {
         const alpha = 1 - i * 0.18;
@@ -430,7 +407,6 @@
       }
     }
 
-    // ── draw enemy bullet ────────────────────────────────────────────
     function drawBugBullet(b) {
       for (let i = 0; i < 4; i++) {
         ctx.globalAlpha = 1 - i * 0.22;
@@ -440,7 +416,6 @@
       ctx.globalAlpha = 1;
     }
 
-    // ── draw particles ───────────────────────────────────────────────
     function drawParticles() {
       particles.forEach(p => {
         ctx.globalAlpha = p.life;
@@ -450,7 +425,6 @@
       ctx.globalAlpha = 1;
     }
 
-    // ── overlay helpers ──────────────────────────────────────────────
     function pulseFactor() { return 0.65 + 0.35 * Math.sin(Date.now() / 380); }
 
     function drawOverlayLines(lines) {
@@ -472,7 +446,6 @@
       drawDuck(Math.round(canvas.width / 2 - DUCK_W / 2), Math.round(cy + bob));
     }
 
-    // ── screens ──────────────────────────────────────────────────────
     function drawIdle() {
       drawBg();
       drawBobDuck(canvas.height / 2 - 130); 
@@ -484,7 +457,6 @@
         { text: `HI: ${highScore}`,       color: T.textMute, font: '10px "Space Mono",monospace' },
       ]);
 
-      // Controls Instructions
       ctx.textAlign = 'center';
       ctx.font      = 'bold 11px "Space Mono",monospace';
       ctx.fillStyle = T.textSec;
@@ -500,7 +472,6 @@
         ctx.fillText('SPACEBAR = SHOOT', canvas.width / 2, cy + 94);
       }
 
-      // Blinking Start Prompt
       ctx.font      = 'bold 12px "Space Mono",monospace';
       ctx.fillStyle = T.accent;
       ctx.globalAlpha = pulseFactor();
@@ -556,7 +527,6 @@
       bugBullets.forEach(drawBugBullet);
       drawParticles();
       drawDuck(duck.x, duck.y);
-      // shoot cooldown bar (pixel blocks)
       if (shootCooldown > 0) {
         const blocks = Math.round((shootCooldown / SHOOT_DELAY) * (DUCK_W / PX));
         ctx.fillStyle = T.textMute;
@@ -566,7 +536,6 @@
       }
     }
 
-    // ── game loop ────────────────────────────────────────────────────
     function loop(ts) {
       const dt = Math.min((ts - lastTime) / 1000, 0.05);
       lastTime = ts;
@@ -588,14 +557,16 @@
       shootCooldown = 0;
       frameCount    = 0;
       duck.x        = Math.round(canvas.width / 2 - DUCK_W / 2);
-      window.addEventListener('deviceorientation', handleOrientation);
+      if (isMobile) {
+        window.addEventListener('deviceorientation', handleOrientation);
+      }
       initBugs();
       state = 'playing';
     }
 
     async function handleAction() {
       if (state === 'idle' || state === 'gameover' || state === 'win') {
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           try {
             const permission = await DeviceOrientationEvent.requestPermission();
             if (permission === 'granted') {
@@ -660,7 +631,9 @@
       cancelAnimationFrame(animId);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('keyup',   onKey);
-      window.removeEventListener('deviceorientation', handleOrientation);
+      if (isMobile) {
+        window.removeEventListener('deviceorientation', handleOrientation);
+      }
       ro.disconnect();
     };
   }
