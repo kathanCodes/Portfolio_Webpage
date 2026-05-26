@@ -132,7 +132,8 @@
     ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
 
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(navigator.userAgent) || 
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const keys = {};
     let state         = 'idle';
     let score         = 0;
