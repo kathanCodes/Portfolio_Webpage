@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import './Navbar.css'
 
 const SECTION_LINKS = [
@@ -10,9 +11,9 @@ const SECTION_LINKS = [
 ]
 
 const PAGE_TABS = [
-  { label: 'Home',     id: 'home' },
-  { label: 'Projects', id: 'projects' },
-  { label: 'Blog',     id: 'blog' },
+  { label: 'Home',     path: '/' },
+  { label: 'Projects', path: '/projects' },
+  { label: 'Blog',     path: '/blog' },
 ]
 
 const SunIcon = () => (
@@ -31,10 +32,14 @@ const MoonIcon = () => (
   </svg>
 )
 
-export default function Navbar({ theme, toggleTheme, page, setPage }) {
+export default function Navbar({ theme, toggleTheme }) {
   const [scrolled,  setScrolled]  = useState(false)
   const [menuOpen,  setMenuOpen]  = useState(false)
   const [activeSection, setActiveSection] = useState('')
+
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isHome = location.pathname === '/'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50)
@@ -42,13 +47,13 @@ export default function Navbar({ theme, toggleTheme, page, setPage }) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => setMenuOpen(false), [page])
+  useEffect(() => setMenuOpen(false), [location.pathname])
 
   const goToSection = (e, href) => {
     e.preventDefault()
-    if (page !== 'home') {
-      setPage('home')
-      setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' }), 120)
+    if (!isHome) {
+      navigate('/')
+      setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' }), 150)
     } else {
       document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
     }
@@ -63,7 +68,7 @@ export default function Navbar({ theme, toggleTheme, page, setPage }) {
       <div className="nav-inner container">
 
         <div className="nav-left">
-          <button className="nav-logo" onClick={() => setPage('home')} aria-label="Go home">
+          <button className="nav-logo" onClick={() => navigate('/')} aria-label="Go home">
             <span className="nav-logo-k">K</span>
             <span className="nav-logo-dot" />
           </button>
@@ -71,11 +76,11 @@ export default function Navbar({ theme, toggleTheme, page, setPage }) {
           <div className="nav-page-tabs" role="tablist" aria-label="Site pages">
             {PAGE_TABS.map(tab => (
               <button
-                key={tab.id}
+                key={tab.path}
                 role="tab"
-                aria-selected={page === tab.id}
-                className={`nav-tab ${page === tab.id ? 'active' : ''}`}
-                onClick={() => setPage(tab.id)}
+                aria-selected={location.pathname === tab.path}
+                className={`nav-tab ${location.pathname === tab.path ? 'active' : ''}`}
+                onClick={() => navigate(tab.path)}
               >
                 {tab.label}
               </button>
@@ -87,9 +92,9 @@ export default function Navbar({ theme, toggleTheme, page, setPage }) {
           <li className="nav-mobile-pages">
             {PAGE_TABS.map(tab => (
               <button
-                key={tab.id}
-                className={`nav-tab ${page === tab.id ? 'active' : ''}`}
-                onClick={() => { setPage(tab.id); setMenuOpen(false) }}
+                key={tab.path}
+                className={`nav-tab ${location.pathname === tab.path ? 'active' : ''}`}
+                onClick={() => { navigate(tab.path); setMenuOpen(false) }}
               >
                 {tab.label}
               </button>
@@ -102,7 +107,7 @@ export default function Navbar({ theme, toggleTheme, page, setPage }) {
             <li key={link.href}>
               <a
                 href={link.href}
-                className={`nav-link ${activeSection === link.href && page === 'home' ? 'active' : ''}`}
+                className={`nav-link ${activeSection === link.href && isHome ? 'active' : ''}`}
                 onClick={e => goToSection(e, link.href)}
               >
                 <span className="nav-num">0{i + 1}.</span>

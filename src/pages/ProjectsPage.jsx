@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
-import './ProjectsPage.css'
+// Import the existing Projects CSS instead of a missing one
+import '../sections/Projects.css'
 
 const ALL_PROJECTS = [
   {
@@ -129,121 +130,168 @@ function ParticleCanvas() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="page-canvas" />
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -1,
+        pointerEvents: 'none'
+      }} 
+    />
+  )
 }
 
-function ProjectCard({ project, index }) {
+function ProjectCard({ project, index, active, setActive }) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
 
   return (
     <div
       ref={ref}
-      className={`pp-card glass-card ${inView ? 'visible' : ''}`}
-      style={{ '--project-color': project.color, transitionDelay: `${index * 0.1}s` }}
+      // Reverted to your original CSS classes
+      className={`project-card glass-card ${project.featured ? 'featured' : ''} ${active === project.id ? 'expanded' : ''} ${inView ? 'visible' : ''}`}
+      style={{ '--project-color': project.color, animationDelay: `${index * 0.15}s` }}
+      onMouseEnter={() => setActive(project.id)}
+      onMouseLeave={() => setActive(null)}
     >
-      <div className="pp-card-top">
-        <span className="pp-icon">{project.icon}</span>
-        <div className="pp-meta">
-          <span className="pp-category">{project.category}</span>
-          {project.featured && <span className="pp-featured">Featured</span>}
+      <div className="project-top">
+        <div className="project-icon">{project.icon}</div>
+        <div className="project-links">
+          <a href={project.github} target="_blank" rel="noopener noreferrer" className="project-link" aria-label="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+            </svg>
+          </a>
         </div>
-        <a href={project.github} target="_blank" rel="noopener noreferrer" className="pp-gh-link" aria-label="GitHub">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-          </svg>
-        </a>
       </div>
 
-      <div>
-        <h3 className="pp-title">{project.title}</h3>
-        <p className="pp-subtitle">{project.subtitle}</p>
-        <span className="pp-period">{project.period}</span>
+      <div className="project-meta">
+        <span className="project-period">{project.category} • {project.period}</span>
+        {project.featured && <span className="project-featured-tag">Featured</span>}
       </div>
 
-      <p className="pp-desc">{project.description}</p>
+      <h3 className="project-title">{project.title}</h3>
+      <div className="project-subtitle">{project.subtitle}</div>
 
-      <ul className="pp-highlights">
+      <p className="project-desc">{project.description}</p>
+
+      <ul className="project-highlights">
         {project.highlights.map((h, i) => (
-          <li key={i}><span className="pp-bullet">▶</span>{h}</li>
+          <li key={i}><span className="project-bullet">▶</span> {h}</li>
         ))}
       </ul>
 
-      <div className="pp-stack">
-        {project.stack.map(t => <span key={t} className="tag">{t}</span>)}
+      <div className="project-stack">
+        {project.stack.map(tech => (
+          <span key={tech} className="tag">{tech}</span>
+        ))}
       </div>
 
-      <div className="pp-glow" />
+      <div className="project-glow" />
     </div>
   )
 }
 
 export default function ProjectsPage() {
   const [filter, setFilter] = useState('All')
+  const [active, setActive] = useState(null)
+
+  // Ensure page scrolls to top when loaded
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const visible = filter === 'All'
     ? ALL_PROJECTS
     : ALL_PROJECTS.filter(p => p.category === filter)
 
+  // Duck Game Script Loader
   useEffect(() => {
     const s = document.createElement('script')
     s.src = '/duck-game.js'
     s.async = true
     document.body.appendChild(s)
-    return () => document.body.removeChild(s)
+    return () => {
+      if (document.body.contains(s)) {
+        document.body.removeChild(s)
+      }
+    }
   }, [])
 
   return (
-    <div className="pp-page">
+    <div style={{ paddingTop: '80px', minHeight: '100vh', position: 'relative' }}>
       <ParticleCanvas />
-      <div className="pp-glow-bg pp-glow-bg-1" />
-      <div className="pp-glow-bg pp-glow-bg-2" />
-
-      <div className="container pp-container">
-        <header className="pp-header">
-          <div className="section-label">Portfolio</div>
-          <h1 className="section-title">
-            All <span className="highlight">Projects</span>
-          </h1>
-          <p className="pp-header-desc">
-            A collection of things I've built — from AI pipelines to full-stack applications.
-          </p>
-        </header>
-
-        <div className="pp-filters">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`pp-filter-btn ${filter === cat ? 'active' : ''}`}
-              onClick={() => setFilter(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="pp-grid">
-          {visible.map((project, i) => (
-            <ProjectCard key={project.id} project={project} index={i} />
-          ))}
-        </div>
-
-        <section className="pp-game-section">
-          <div className="section-label">Mini Game</div>
-          <h2 className="section-title" style={{ marginBottom: '24px' }}>
-            Rubber Duck <span className="highlight">Debugger</span>
-          </h2>
+      
+      <section className="projects" style={{ background: 'transparent' }}>
+        <div className="container">
           
-          <div className="duck-game-container">
-            <canvas id="duck-game-canvas" width="800" height="400"></canvas>
+          <div className="projects-header visible" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div className="section-label">Portfolio</div>
+            <h2 className="section-title">
+              All <span className="highlight">Projects</span>
+            </h2>
+            <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
+              A collection of things I've built — from AI pipelines to full-stack applications.
+            </p>
           </div>
-        </section>
 
-        <div className="pp-cta">
-          <a href="https://github.com/kathanCodes" target="_blank" rel="noopener noreferrer" className="btn-outline">
-            View All on GitHub ↗
-          </a>
+          {/* Filters */}
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem', flexWrap: 'wrap' }}>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                className={filter === cat ? 'btn-primary' : 'btn-outline'}
+                onClick={() => setFilter(cat)}
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Grid using your original layout */}
+          <div className="projects-grid visible">
+            {visible.map((project, i) => (
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={i} 
+                active={active} 
+                setActive={setActive} 
+              />
+            ))}
+          </div>
+
+          {/* Mini Game Section */}
+          <div style={{ marginTop: '5rem', textAlign: 'center' }}>
+            <div className="section-label">Mini Game</div>
+            <h2 className="section-title" style={{ marginBottom: '24px' }}>
+              Rubber Duck <span className="highlight">Debugger</span>
+            </h2>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <canvas 
+                id="duck-game-canvas" 
+                width="800" 
+                height="400"
+                style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', background: 'rgba(0, 0, 0, 0.2)' }}
+              ></canvas>
+            </div>
+          </div>
+
+          {/* Footer CTA */}
+          <div className="projects-footer visible" style={{ marginTop: '4rem' }}>
+            <a href="https://github.com/kathanCodes" target="_blank" rel="noopener noreferrer" className="btn-outline">
+              View All on GitHub ↗
+            </a>
+          </div>
+
         </div>
-      </div>
+      </section>
     </div>
   )
 }

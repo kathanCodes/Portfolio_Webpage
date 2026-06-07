@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "description": "Personal portfolio website built with React + Vite. Dark, minimal, developer aesthetic with smooth animations.",
+  "homepage": "https://github.com/kathanCodes/Portfolio_Webpage#readme",
+  "bugs": {
+    "url": "https://github.com/kathanCodes/Portfolio_Webpage/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kathanCodes/Portfolio_Webpage.git"
+  },
   "license": "ISC",
   "author": "",
   "type": "module",
@@ -14,26 +22,27 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "framer-motion": "^11.0.0",
-    "react-scroll": "^1.9.0",
-    "react-type-animation": "^3.2.0",
-    "react-intersection-observer": "^9.5.3",
-    "react-icons": "^5.0.1",
-    "react-particles": "^2.12.2",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.0.0",
-    "react-hot-toast": "^2.4.1"
+    "framer-motion": "^11.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-icons": "^5.0.1",
+    "react-intersection-observer": "^9.5.3",
+    "react-particles": "^2.12.2",
+    "react-router-dom": "^7.17.0",
+    "react-scroll": "^1.9.0",
+    "react-type-animation": "^3.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.1.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5"
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "vite": "^5.1.0"
   }
 }

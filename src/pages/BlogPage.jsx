@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useInView } from 'react-intersection-observer'
 import './BlogPage.css'
 
 const POSTS = [
@@ -109,12 +108,31 @@ function ParticleCanvas() {
 }
 
 function PostCard({ post, index }) {
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [isVisible, setIsVisible] = useState(false)
+  const cardRef = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+    }
+    
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <article
-      ref={ref}
-      className={`blog-card glass-card ${inView ? 'visible' : ''}`}
+      ref={cardRef}
+      className={`blog-card glass-card ${isVisible ? 'visible' : ''}`}
       style={{ '--post-color': post.color, transitionDelay: `${index * 0.1}s` }}
     >
       <div className="blog-card-top">
