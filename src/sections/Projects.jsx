@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useInView } from 'react-intersection-observer'
 import './Projects.css'
 
@@ -59,10 +59,83 @@ const PROJECTS = [
 export default function Projects({ setPage }) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
   const [active, setActive] = useState(null)
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    let animId
+    let particles = []
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: Math.random() * 2.0 + 1.0, 
+        opacity: Math.random() * 0.4 + 0.6,
+      })
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      
+      const isLightMode = 
+        document.documentElement.getAttribute('data-theme') === 'light' || 
+        document.body.getAttribute('data-theme') === 'light' ||
+        (document.querySelector('[data-theme]')?.getAttribute('data-theme') === 'light')
+
+      const particleColorRGB = isLightMode ? '255, 215, 0' : '0, 255, 136'
+
+      particles.forEach(p => {
+        p.x += p.vx
+        p.y += p.vy
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${particleColorRGB}, ${p.opacity})`
+        ctx.fill()
+      })
+
+      particles.forEach((p, i) => {
+        particles.slice(i + 1).forEach(q => {
+          const d = Math.hypot(p.x - q.x, p.y - q.y)
+          if (d < 120) {
+            ctx.beginPath()
+            ctx.moveTo(p.x, p.y)
+            ctx.lineTo(q.x, q.y)
+            ctx.strokeStyle = `rgba(${particleColorRGB}, ${0.4 * (1 - d / 120)})`
+            ctx.lineWidth = 0.5
+            ctx.stroke()
+          }
+        })
+      })
+
+      animId = requestAnimationFrame(draw)
+    }
+    draw()
+
+    return () => {
+      cancelAnimationFrame(animId)
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
 
   return (
     <section id="projects" className="projects" ref={ref}>
-      <div className="container">
+      <canvas ref={canvasRef} className="projects-canvas" />
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className={`projects-header ${inView ? 'visible' : ''}`}>
           <div className="section-label">Projects</div>
           <h2 className="section-title">
