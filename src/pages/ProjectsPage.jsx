@@ -139,7 +139,7 @@ function ParticleCanvas() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: -1,
+        zIndex: 0,
         pointerEvents: 'none'
       }} 
     />
@@ -226,7 +226,7 @@ export default function ProjectsPage() {
     <div style={{ paddingTop: '80px', minHeight: '100vh', position: 'relative' }}>
       <ParticleCanvas />
       
-      <section className="projects" style={{ background: 'transparent' }}>
+      <section className="projects" style={{ background: 'transparent', position: 'relative', zIndex: 1 }}>
         <div className="container">
           
           <div className="projects-header visible" style={{ textAlign: 'center', marginBottom: '2rem' }}>
